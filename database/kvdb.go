@@ -36,6 +36,7 @@ func init() {
 // Both data and timestamps are read from and written to their respective files using buffered I/O with the bufio package,
 // reducing the overhead of frequent disk I/O operations.
 // Buffered writers and scanners are used to write and read data to and from files, reducing the overhead of frequent disk I/O operations.
+
 func SaveToDisk() {
 	mu.RLock()
 	defer mu.RUnlock()
