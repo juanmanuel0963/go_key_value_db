@@ -2,6 +2,7 @@
 package database
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,6 +33,9 @@ func init() {
 	loadFromDisk() // Load data when the application starts
 }
 
+// Both data and timestamps are read from and written to their respective files using buffered I/O with the bufio package,
+// reducing the overhead of frequent disk I/O operations.
+// Buffered writers and scanners are used to write and read data to and from files, reducing the overhead of frequent disk I/O operations.
 func SaveToDisk() {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -45,11 +49,14 @@ func SaveToDisk() {
 	}
 	defer dataFile.Close()
 
-	encoder := json.NewEncoder(dataFile)
+	dataWriter := bufio.NewWriter(dataFile)
+	encoder := json.NewEncoder(dataWriter)
 	if err := encoder.Encode(data); err != nil {
 		// Handle the error
 		fmt.Println(err)
 	}
+	//The Flush method is called to ensure that the buffered data is written to the file.
+	dataWriter.Flush()
 
 	//----------Save TimeStamp file----------
 	tsFile, err := os.Create(tsFile)
@@ -60,11 +67,14 @@ func SaveToDisk() {
 	}
 	defer tsFile.Close()
 
-	tsEncoder := json.NewEncoder(tsFile)
+	tsWriter := bufio.NewWriter(tsFile)
+	tsEncoder := json.NewEncoder(tsWriter)
 	if err := tsEncoder.Encode(timestamps); err != nil {
 		// Handle the error
 		fmt.Println(err)
 	}
+	//The Flush method is called to ensure that the buffered data is written to the file.
+	tsWriter.Flush()
 }
 
 func loadFromDisk() {
@@ -75,30 +85,40 @@ func loadFromDisk() {
 	dataFile, err := os.Open(dataFile)
 	if err != nil {
 		// Handle the error
-		fmt.Println(err)
+		//fmt.Println(err)
 		return
 	}
 	defer dataFile.Close()
 
-	dataDecoder := json.NewDecoder(dataFile)
-	if err := dataDecoder.Decode(&data); err != nil {
-		// Handle the error
-		fmt.Println(err)
+	dataScanner := bufio.NewScanner(dataFile)
+	for dataScanner.Scan() {
+		line := dataScanner.Text()
+		var entry map[string]string
+		if err := json.Unmarshal([]byte(line), &entry); err == nil {
+			for key, value := range entry {
+				data[key] = value
+			}
+		}
 	}
 
 	//----------Load TimeStamp file----------
 	tsFile, err := os.Open(tsFile)
 	if err != nil {
 		// Handle the error
-		fmt.Println(err)
+		//fmt.Println(err)
 		return
 	}
 	defer tsFile.Close()
 
-	tsDecoder := json.NewDecoder(tsFile)
-	if err := tsDecoder.Decode(&timestamps); err != nil {
-		// Handle the error
-		fmt.Println(err)
+	tsScanner := bufio.NewScanner(tsFile)
+	for tsScanner.Scan() {
+		line := tsScanner.Text()
+		var tsEntry map[string]Timestamp
+		if err := json.Unmarshal([]byte(line), &tsEntry); err == nil {
+			for key, ts := range tsEntry {
+				timestamps[key] = ts
+			}
+		}
 	}
 }
 

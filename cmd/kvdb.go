@@ -72,9 +72,10 @@ var tsCmd = &cobra.Command{
 		if err != nil {
 			// Handle the error
 			fmt.Println(err)
+		} else {
+			// Print or use the timestamps
+			fmt.Println(createdAt)
+			fmt.Println(updatedAt)
 		}
-		// Print or use the timestamps
-		fmt.Println(createdAt)
-		fmt.Println(updatedAt)
 	},
 }
