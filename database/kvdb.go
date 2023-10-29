@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -15,9 +16,9 @@ var (
 	data       = make(map[string]string)
 	timestamps = make(map[string]Timestamp)
 	mu         sync.RWMutex
-	dataFolder = "data"                          // Folder to store data files
-	dataFile   = dataFolder + "/data.json"       // File to store data
-	tsFile     = dataFolder + "/timestamps.json" // File to store timestamps
+	dataFolder string // Folder to store data files
+	dataFile   string // File to store data
+	tsFile     string // File to store timestamps
 )
 
 type Timestamp struct {
@@ -26,6 +27,20 @@ type Timestamp struct {
 }
 
 func init() {
+	// Get the path to the directory where kvdb.exe is located
+	exePath, err := os.Executable()
+	if err != nil {
+		fmt.Println("Failed to get executable path:", err)
+		os.Exit(1)
+	}
+
+	// Set dataFolder relative to the executable path
+	dataFolder = filepath.Join(filepath.Dir(exePath), "data")
+
+	// Set dataFile and tsFile based on dataFolder
+	dataFile = filepath.Join(dataFolder, "data.json")
+	tsFile = filepath.Join(dataFolder, "timestamps.json")
+
 	// Ensure that the "data" folder exists
 	if _, err := os.Stat(dataFolder); os.IsNotExist(err) {
 		os.Mkdir(dataFolder, os.ModePerm)
