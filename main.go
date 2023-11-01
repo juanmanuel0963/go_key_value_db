@@ -1,7 +1,15 @@
 package main
 
-import "kvdb/cmd"
+import (
+	"fmt"
+	"kvdb/cmd"
+	"os"
+)
 
 func main() {
-	cmd.Execute()
+
+	if err := cmd.Execute(); err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
 }
